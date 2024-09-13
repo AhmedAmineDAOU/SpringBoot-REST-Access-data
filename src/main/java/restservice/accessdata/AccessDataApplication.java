@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AccessdataApplication {
+public class AccessDataApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AccessdataApplication.class, args);
+		SpringApplication.run(AccessDataApplication.class, args);
 	}
 
 }

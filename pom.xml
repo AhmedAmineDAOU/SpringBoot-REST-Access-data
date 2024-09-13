@@ -11,7 +11,7 @@
 	<groupId>restservice</groupId>
 	<artifactId>accessdata</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>accessdata</name>
+	<name>access data</name>
 	<description>Spring boot access data jpa/mongoDB project</description>
 	<url/>
 	<licenses>
