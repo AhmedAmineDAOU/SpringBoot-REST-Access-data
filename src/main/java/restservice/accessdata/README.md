@@ -1,4 +1,4 @@
-# [Person](./Person.java) Person Entity - REST API
+# [Person](./Person.java) Person Entity 
 
 This document explains the functionality and purpose of the `Person` class defined in the Java file.
 
@@ -21,6 +21,21 @@ public class Person {
 }
 ```
 
+# [PersonRepository](./PersonRepository.java) Person Repository
+
+This repository is an interface that allows you to perform various operations involving ``Person`` objects. It inherits these operations by extending the ``PagingAndSortingRepository`` interface, which is part of Spring Data Commons, providing built-in methods for CRUD (Create, Read, Update, Delete) operations, as well as pagination and sorting capabilities.
+
+At runtime, Spring Data REST automatically generates an implementation of this interface. The ``@RepositoryRestResource`` annotation is used to direct Spring MVC to create RESTful endpoints at /people instead of the default /persons. Although the @RepositoryRestResource annotation is not mandatory for exposing the repository, it allows customization of the REST export details, such as changing the URL path.
+
+In addition to the default methods, a custom query method ``findByLastName`` is defined to retrieve a list of Person objects based on their last name. This custom query can be invoked through REST endpoints, making it easy to fetch specific data.
+
+Spring Boot, in conjunction with Spring Data JPA, automatically creates a concrete implementation of ``PersonRepository`` and configures it to interact with a backend database, typically an in-memory database for development purposes.
+
+Spring Data REST builds on top of Spring MVC, creating a collection of Spring MVC controllers, JSON converters, and other components to provide a RESTful interface. These components seamlessly connect with the Spring Data JPA backend. Spring Boot handles the autoconfiguration of these components, allowing you to focus on defining the repository and the business logic.
+
+For a deeper understanding of how Spring Data REST works behind the scenes, you can explore the ``RepositoryRestMvcConfiguration`` in the Spring Data REST framework.
+
+## Domain Object Questions
 ### **Question 1**: Why is the `@Entity` annotation necessary in this class?
 **Answer**:  
 The `@Entity` annotation marks the class as a JPA entity, meaning it will be mapped to a table in a relational database. Without this annotation, JPA would not recognize the class as an entity, and it wouldn’t be able to manage or persist its instances in the database.
