@@ -21,11 +21,11 @@ public class Person {
 }
 ```
 
-# [PersonRepository](./PersonRepository.java) Person Repository
+# [``PersonRepository``](./PersonRepository.java) Person Repository
 
 This repository is an interface that allows you to perform various operations involving ``Person`` objects. It inherits these operations by extending the ``PagingAndSortingRepository`` interface, which is part of Spring Data Commons, providing built-in methods for CRUD (Create, Read, Update, Delete) operations, as well as pagination and sorting capabilities.
 
-At runtime, Spring Data REST automatically generates an implementation of this interface. The ``@RepositoryRestResource`` annotation is used to direct Spring MVC to create RESTful endpoints at /people instead of the default /persons. Although the @RepositoryRestResource annotation is not mandatory for exposing the repository, it allows customization of the REST export details, such as changing the URL path.
+At runtime, Spring Data REST automatically generates an implementation of this interface. The ````@RepositoryRestResource```` annotation is used to direct Spring MVC to create RESTful endpoints at ``/people`` instead of the default ``/persons``. Although the ``@RepositoryRestResource`` annotation is not mandatory for exposing the repository, it allows customization of the REST export details, such as changing the URL path.
 
 In addition to the default methods, a custom query method ``findByLastName`` is defined to retrieve a list of Person objects based on their last name. This custom query can be invoked through REST endpoints, making it easy to fetch specific data.
 
@@ -169,3 +169,109 @@ Database-Specific Limitations: Some databases may use less efficient ``ID`` gene
 
 Scalability: The `AUTO` strategy might not perform well in distributed systems, as it could create conflicts when generating IDs across multiple nodes.
 In high-performance applications, it might be better to explicitly specify a more efficient strategy, such as ``GenerationType.SEQUENCE`` for databases that support sequences, or ``GenerationType.IDENTITY`` for databases that support auto-increment fields.
+
+
+## Repository Questions
+
+Here are 10 expert-level questions and responses related to your ``PersonRepository` interface in the Spring Data REST context:
+
+### **Question 1**: Why is ``PagingAndSortingRepository`` used alongside ``CrudRepository`` in the ``PersonRepository`?
+Answer:
+``PagingAndSortingRepository`` is an extension of ``CrudRepository`` that adds pagination and sorting capabilities to the basic CRUD operations. By extending both, ``PersonRepository` inherits all the CRUD methods (save(), findById(), delete(), etc.) as well as methods to retrieve paginated and sorted results (findAll(Pageable pageable) and findAll(Sort sort)). This provides more flexibility in querying large datasets and returning sorted/paginated results in your API.
+
+### **Question 2**: What does the ``@RepositoryRestResource`` annotation do, and why is it used here?
+Answer:
+``@RepositoryRestResource`` is used to customize how a repository is exposed as a REST resource by Spring Data REST. In your ``PersonRepository`, it changes the default behavior:
+
+collectionResourceRel = "people": This sets the name of the collection in the JSON response to people instead of the default persons.
+path = "people": This customizes the URL path to ``/people`` instead of the default ``/persons``.
+Without this annotation, the repository would still be exposed, but under the default conventions (``/persons``). It is mainly used for readability and customization of the API.
+
+### **Question 3**: What is the purpose of the ``@Param`` annotation in the findByLastName method?
+Answer:
+The @Param("name") annotation binds the method parameter name to the query parameter in the URL when the findByLastName method is invoked. This allows you to use a RESTful API call such as ``/people``/search/findByLastName?name=Doe to search for people by their last name. The @Param annotation ensures that the name parameter from the HTTP request is mapped correctly to the name argument in the method.
+
+### **Question 4**: How does Spring Data REST expose custom query methods like findByLastName as REST endpoints?
+Answer:
+Spring Data REST automatically exposes any repository method that follows the Spring Data naming conventions (e.g., findBy, readBy, queryBy) as a RESTful endpoint. For your findByLastName method, Spring Data REST creates the endpoint ``/people``/search/findByLastName by default, and it accepts a query parameter (e.g., ?name=Doe) to retrieve all Person entities with the specified last name.
+
+### **Question 5**: How would pagination and sorting be applied to the findByLastName query?
+Answer:
+To add pagination and sorting to the ``findByLastName`` query, you would need to pass Pageable or Sort parameters to the method. For example:
+
+````java
+List<Person> findByLastName(@Param("name") String name, Pageable pageable);
+````
+
+```bash
+curl -X GET "http://localhost:8080``/people``/search/findByLastName?name=Doe&page=0&size=10&sort=firstName,asc"
+```
+This query would return the first page of results (with 10 entries per page) sorted by firstName in ascending order.
+
+### **Question 6**: What happens if you do not provide a ``@RepositoryRestResource`` annotation in your ``PersonRepository`?
+Answer:
+If you omit the ````@RepositoryRestResource```` annotation, Spring Data REST will still expose your ``PersonRepository` as a REST resource, but it will use default conventions. For instance:
+
+The collection endpoint would be ``/persons`` instead of ``/people``.
+The collection name in the response would be persons instead of people. Thus, ``@RepositoryRestResource`` is mainly for customization, and the repository would still be exposed without it.
+### **Question 7**: How would you implement a custom query in ``PersonRepository` to find people by first name and last name?
+Answer:
+To implement a custom query method for both firstName and lastName, you can define it in your ``PersonRepository` like this:
+
+````java
+List<Person> findByFirstNameAndLastName(@Param("firstName") String firstName, @Param("lastName") String lastName);
+This would be exposed as /people/search/findByFirstNameAndLastName?firstName=John&lastName=Doe, allowing you to search for Person entities based on both first and last names.
+````
+### **Question 8**: How would you handle a scenario where findByLastName should return a custom response format instead of the default JSON provided by Spring Data REST?
+Answer:
+To customize the response format, you would need to bypass Spring Data REST’s automatic endpoint creation and instead create a custom controller. This allows you to manually control the response structure.
+
+```java
+@RestController
+@RequestMapping("/custom")
+public class CustomPersonController {
+
+    @Autowired
+    private PersonRepository personRepository;
+
+    @GetMapping("``/people``/lastName/{name}")
+    public ResponseEntity<CustomPersonResponse> findByLastNameCustom(@PathVariable String name) {
+        List<Person> people = personRepository.findByLastName(name);
+        CustomPersonResponse response = new CustomPersonResponse(people);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+}
+`````
+### **Question 9**: What are the advantages and disadvantages of using Spring Data REST versus custom controllers?
+Answer:
+
+Advantages:
+
+Rapid development: Spring Data REST automatically exposes repository methods, reducing boilerplate code.
+Standardization: Follows REST conventions for exposing CRUD and search operations.
+Built-in features: Pagination, sorting, and HATEOAS links are handled automatically.
+Disadvantages:
+
+Limited flexibility: For complex business logic, validation, or custom response formats, you will need custom controllers.
+Lack of fine-grained control: Custom controllers offer more control over security, error handling, and response customization.
+### **Question 10**: How would you secure the ``PersonRepository` endpoints so that only authenticated users can access them?
+Answer:
+You can secure the repository endpoints using Spring Security. In your security configuration, you can specify that only authenticated users (or users with specific roles) can access certain endpoints. For example:
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+            .antMatchers("``/people``/**").authenticated()  // Only authenticated users can access ``/people``
+            .anyRequest().permitAll()
+            .and()
+            .httpBasic();  // Basic authentication
+    }
+}
+```
+This configuration ensures that only authenticated users can access the ``/people`` endpoints exposed by Spring Data REST.
